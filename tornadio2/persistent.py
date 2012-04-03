@@ -31,12 +31,21 @@ from tornado.websocket import WebSocketHandler
 
 from tornadio2 import proto
 
+logger = logging.getLogger('tornadio.persistent')
 
 class TornadioWebSocketHandler(WebSocketHandler):
     """Websocket protocol handler"""
 
     # Transport name
     name = 'websocket'
+
+    def __init__(self, application, request, **kwargs):
+        logger.debug("%s::__init__ application=%s request=%s" % (
+            self.__class__.__name__,
+            application,
+            request
+        ))
+        super(TornadioWebSocketHandler, self).__init__(application, request, **kwargs)
 
     def initialize(self, server):
         self.server = server
