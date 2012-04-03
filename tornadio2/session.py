@@ -155,12 +155,12 @@ class Session(sessioncontainer.SessionBase):
 
         # If IP address don't match - refuse connection
         if handler.request.remote_ip != self.remote_ip:
-            logging.error('Attempted to attach to session %s (%s) from different IP (%s)' % (
+            logging.error('Attempted to attach to session %s (%s) from different IP (%s) because we are behind an ssl tunnel' % (
                           self.session_id,
                           self.remote_ip,
                           handler.request.remote_ip
                           ))
-            return False
+            #return False
 
         # Associate handler and promote
         self.handler = handler
