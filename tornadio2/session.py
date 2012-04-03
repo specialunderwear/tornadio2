@@ -145,6 +145,10 @@ class Session(sessioncontainer.SessionBase):
         `handler`
             Associate active Tornado handler with the session
         """
+        logging.debug("%s::set_handler handler=%s" % (
+            self.__class__.__name__,
+            handler
+        ))
         # Check if session already has associated handler
         if self.handler is not None:
             return False
