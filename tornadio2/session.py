@@ -110,6 +110,10 @@ class Session(sessioncontainer.SessionBase):
         # Heartbeat related stuff
         self._heartbeat_timer = None
         self._heartbeat_interval = self.server.settings['heartbeat_interval'] * 1000
+        logging.debug("%s::__init__ _heartbeat_interval=%s" % (
+            self.__class__.__name__,
+            self._heartbeat_interval
+        ))
         self._missed_heartbeats = 0
 
         # Endpoints
@@ -155,6 +159,10 @@ class Session(sessioncontainer.SessionBase):
 
         # Associate handler and promote
         self.handler = handler
+        logging.debug("%s::set_handler handler=%s" % (
+            self.__class__.__name__,
+            self.handler
+        ))
         self.promote()
 
         # Stats
@@ -170,6 +178,11 @@ class Session(sessioncontainer.SessionBase):
         """
         # Attempt to remove another handler
         if self.handler != handler:
+            logging.debug("%s::remove_handler handler=%s handler_type=%s" % (
+                self.__class__.__name__,
+                self.handler,
+                self.handler.__class__.__name__
+            ))
             raise Exception('Attempted to remove invalid handler')
 
         self.handler = None
@@ -184,6 +197,10 @@ class Session(sessioncontainer.SessionBase):
             Encoded socket.io message
         """
         logging.debug('<<< ' + pack)
+        logging.debug('%s::send_message pack=%s' % (
+            self.__class__.__name__,
+            pack
+        ))
 
         # TODO: Possible optimization if there's on-going connection - there's no
         # need to queue messages?
@@ -205,6 +222,9 @@ class Session(sessioncontainer.SessionBase):
 
         # If session was closed, detach connection
         if self.is_closed and self.handler is not None:
+            logging.debug("%s::flush is_closed=True, calling handler.session_closed()" % (
+                self.__class__.__name__
+            ))
             self.handler.session_closed()
 
     # Close connection with all endpoints or just one endpoint
@@ -251,6 +271,9 @@ class Session(sessioncontainer.SessionBase):
     # Heartbeats
     def reset_heartbeat(self):
         """Reset hearbeat timer"""
+        logging.debug("%s::reset_heartbeat" % (
+            self.__class__.__name__
+        ))
         self.stop_heartbeat()
 
         self._heartbeat_timer = periodic.Callback(self._heartbeat,
@@ -260,23 +283,35 @@ class Session(sessioncontainer.SessionBase):
 
     def stop_heartbeat(self):
         """Stop active heartbeat"""
+        logging.debug("%s::stop_heartbeat" % (
+            self.__class__.__name__
+        ))
         if self._heartbeat_timer is not None:
             self._heartbeat_timer.stop()
             self._heartbeat_timer = None
 
     def delay_heartbeat(self):
         """Delay active heartbeat"""
+        logging.debug("%s::delay_heartbeat" % (
+            self.__class__.__name__
+        ))
         if self._heartbeat_timer is not None:
             self._heartbeat_timer.delay()
 
     def _heartbeat(self):
         """Heartbeat callback"""
+        logging.debug("%s::_heartbeat called" % (
+            self.__class__.__name__
+        ))
         self.send_message(proto.heartbeat())
 
         self._missed_heartbeats += 1
 
         # TODO: Configurable
         if self._missed_heartbeats > 2:
+            logging.debug("%s::_heartbeat missed more than 2 heartbeats, closing" % (
+                self.__class__.__name__
+            ))
             self.close()
 
     # Endpoints
