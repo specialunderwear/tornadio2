@@ -26,7 +26,7 @@ from tornado.web import HTTPError
 
 from tornadio2 import persistent, polling, sessioncontainer, session, proto, preflight, stats
 
-logger = logger.getLogger('tornadio.router')
+logger = logging.getLogger('tornadio.router')
 
 PROTOCOLS = {
     'websocket': persistent.TornadioWebSocketHandler,
