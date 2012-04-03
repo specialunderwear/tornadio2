@@ -28,6 +28,7 @@ from tornado.web import HTTPError
 
 from tornadio2 import sessioncontainer, proto, periodic, stats
 
+logger = logging.getLogger('tornadio.session')
 
 class ConnectionInfo(object):
     """Connection information object.
@@ -110,7 +111,7 @@ class Session(sessioncontainer.SessionBase):
         # Heartbeat related stuff
         self._heartbeat_timer = None
         self._heartbeat_interval = self.server.settings['heartbeat_interval'] * 1000
-        logging.debug("%s::__init__ _heartbeat_interval=%s" % (
+        logger.debug("%s::__init__ _heartbeat_interval=%s" % (
             self.__class__.__name__,
             self._heartbeat_interval
         ))
@@ -159,7 +160,7 @@ class Session(sessioncontainer.SessionBase):
 
         # Associate handler and promote
         self.handler = handler
-        logging.debug("%s::set_handler handler=%s" % (
+        logger.debug("%s::set_handler handler=%s" % (
             self.__class__.__name__,
             self.handler
         ))
@@ -178,7 +179,7 @@ class Session(sessioncontainer.SessionBase):
         """
         # Attempt to remove another handler
         if self.handler != handler:
-            logging.debug("%s::remove_handler handler=%s handler_type=%s" % (
+            logger.debug("%s::remove_handler handler=%s handler_type=%s" % (
                 self.__class__.__name__,
                 self.handler,
                 self.handler.__class__.__name__
@@ -196,8 +197,8 @@ class Session(sessioncontainer.SessionBase):
         `pack`
             Encoded socket.io message
         """
-        logging.debug('<<< ' + pack)
-        logging.debug('%s::send_message pack=%s' % (
+        logger.debug('<<< ' + pack)
+        logger.debug('%s::send_message pack=%s' % (
             self.__class__.__name__,
             pack
         ))
@@ -222,7 +223,7 @@ class Session(sessioncontainer.SessionBase):
 
         # If session was closed, detach connection
         if self.is_closed and self.handler is not None:
-            logging.debug("%s::flush is_closed=True, calling handler.session_closed()" % (
+            logger.debug("%s::flush is_closed=True, calling handler.session_closed()" % (
                 self.__class__.__name__
             ))
             self.handler.session_closed()
@@ -271,7 +272,7 @@ class Session(sessioncontainer.SessionBase):
     # Heartbeats
     def reset_heartbeat(self):
         """Reset hearbeat timer"""
-        logging.debug("%s::reset_heartbeat" % (
+        logger.debug("%s::reset_heartbeat" % (
             self.__class__.__name__
         ))
         self.stop_heartbeat()
@@ -283,7 +284,7 @@ class Session(sessioncontainer.SessionBase):
 
     def stop_heartbeat(self):
         """Stop active heartbeat"""
-        logging.debug("%s::stop_heartbeat" % (
+        logger.debug("%s::stop_heartbeat" % (
             self.__class__.__name__
         ))
         if self._heartbeat_timer is not None:
@@ -292,7 +293,7 @@ class Session(sessioncontainer.SessionBase):
 
     def delay_heartbeat(self):
         """Delay active heartbeat"""
-        logging.debug("%s::delay_heartbeat" % (
+        logger.debug("%s::delay_heartbeat" % (
             self.__class__.__name__
         ))
         if self._heartbeat_timer is not None:
@@ -300,7 +301,7 @@ class Session(sessioncontainer.SessionBase):
 
     def _heartbeat(self):
         """Heartbeat callback"""
-        logging.debug("%s::_heartbeat called" % (
+        logger.debug("%s::_heartbeat called" % (
             self.__class__.__name__
         ))
         self.send_message(proto.heartbeat())
@@ -309,7 +310,7 @@ class Session(sessioncontainer.SessionBase):
 
         # TODO: Configurable
         if self._missed_heartbeats > 2:
-            logging.debug("%s::_heartbeat missed more than 2 heartbeats, closing" % (
+            logger.debug("%s::_heartbeat missed more than 2 heartbeats, closing" % (
                 self.__class__.__name__
             ))
             self.close()
@@ -378,7 +379,7 @@ class Session(sessioncontainer.SessionBase):
             Raw socket.io message to handle
         """
         try:
-            logging.debug('>>> ' + msg)
+            logger.debug('>>> ' + msg)
 
             parts = msg.split(':', 3)
             if len(parts) == 3:
