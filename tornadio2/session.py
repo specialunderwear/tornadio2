@@ -145,9 +145,11 @@ class Session(sessioncontainer.SessionBase):
         `handler`
             Associate active Tornado handler with the session
         """
-        logging.debug("%s::set_handler handler=%s" % (
+        logging.debug("%s::set_handler handler=%s request.remote_ip=%s registered_ip=%s" % (
             self.__class__.__name__,
-            handler
+            handler,
+            handler.request.remote_ip,
+            self.remote_ip
         ))
         # Check if session already has associated handler
         if self.handler is not None:
