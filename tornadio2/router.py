@@ -20,11 +20,13 @@
 
     Transport protocol router and main entry point for all socket.io clients.
 """
-
+import logging
 from tornado import ioloop, version_info
 from tornado.web import HTTPError
 
 from tornadio2 import persistent, polling, sessioncontainer, session, proto, preflight, stats
+
+logger = logger.getLogger('tornadio.router')
 
 PROTOCOLS = {
     'websocket': persistent.TornadioWebSocketHandler,
@@ -198,6 +200,10 @@ class TornadioRouter(object):
             parameters and cookies.
         """
         # TODO: Possible optimization here for settings.get
+        logger.debug("%s::create_session request=%s" % (
+            self.__class__.__name__,
+            request
+        ))
         s = session.Session(self._connection,
                             self,
                             request,
