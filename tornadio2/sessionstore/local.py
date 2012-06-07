@@ -80,7 +80,7 @@ class SessionBase(object):
                              self.promoted or 0)
 
 
-class SessionContainer(object):
+class LocalSessionStore(object):
     def __init__(self):
         self._items = dict()
         self._queue = []

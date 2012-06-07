@@ -24,7 +24,8 @@
 from tornado import ioloop, version_info
 from tornado.web import HTTPError
 
-from tornadio2 import persistent, polling, sessioncontainer, session, proto, preflight, stats
+from tornadio2 import persistent, polling, session, proto, preflight, stats
+from tornadio2.sessionstore import local as sessionstore
 
 PROTOCOLS = {
     'websocket': persistent.TornadioWebSocketHandler,
@@ -47,17 +48,18 @@ DEFAULT_SETTINGS = {
                           'jsonp-polling', 'htmlfile'],
     # XHR-Polling request timeout, in seconds
     'xhr_polling_timeout': 20,
-    # Some antivirus software messed up with HTTP traffic and, as a result, websockets
-    # to port 80 stop to work. If you enable this setting, TornadIO will try to send
-    # ping packet and wait for response. If nothing will happen during 5 seconds,
-    # TornadIO considers connection not working.
+    # Some antivirus software messed up with HTTP traffic and, as a result,
+    # websockets to port 80 stop to work. If you enable this setting,
+    # TornadIO will try to send ping packet and wait for response. If nothing
+    # will happen during 5 seconds, TornadIO considers connection not working.
     'websocket_check': False,
-    # Starting from socket.io 0.9.2, client started verifying heartbeats for all transports.
-    # Disable this if you're on 0.9.1 or lower, as this settings will significantly increase
-    # your server load for clients with polling transports.
+    # Starting from socket.io 0.9.2, client started verifying heartbeats for all
+    # transports. Disable this if you're on 0.9.1 or lower, as this settings
+    # will significantly increase your server load for clients with polling
+    # transports.
     'global_heartbeats': True,
-    # Client timeout adjustment in seconds. If you see your clients disconnect without a
-    # reason, increase this value.
+    # Client timeout adjustment in seconds. If you see your clients disconnect
+    # without a reason, increase this value.
     'client_timeout': 5
     }
 
@@ -80,7 +82,8 @@ class HandshakeHandler(preflight.PreflightHandler):
 
             settings = self.server.settings
 
-            # TODO: Fix heartbeat timeout. For now, it is adding 5 seconds to the client timeout.
+            # TODO: Fix heartbeat timeout. For now, it is adding 5 seconds to
+            # the client timeout.
             data = '%s:%d:%d:%s' % (
                 sess.session_id,
                 # TODO: Fix me somehow a well. 0.9.2 will drop connection is no
@@ -88,7 +91,8 @@ class HandshakeHandler(preflight.PreflightHandler):
                 settings['heartbeat_interval'] + settings['client_timeout'],
                 # TODO: Fix me somehow.
                 settings['xhr_polling_timeout'] + settings['client_timeout'],
-                ','.join(t for t in self.server.settings.get('enabled_protocols'))
+                ','.join(t for t in \
+                    self.server.settings.get('enabled_protocols'))
                 )
 
             if self.server.settings['global_heartbeats']:
@@ -96,7 +100,8 @@ class HandshakeHandler(preflight.PreflightHandler):
 
             jsonp = self.get_argument('jsonp', None)
             if jsonp is not None:
-                self.set_header('Content-Type', 'application/javascript; charset=UTF-8')
+                self.set_header('Content-Type',
+                    'application/javascript; charset=UTF-8')
 
                 data = 'io.j[%s](%s);' % (jsonp, proto.json_dumps(data))
             else:
@@ -117,7 +122,8 @@ class TornadioRouter(object):
                  connection,
                  user_settings=dict(),
                  namespace='socket.io',
-                 io_loop=None):
+                 io_loop=None,
+                 session_store=sessionstore.LocalSessionStore()):
         """Constructor.
 
         `connection`
@@ -146,14 +152,8 @@ class TornadioRouter(object):
             self.settings.update(user_settings)
 
         # Sessions
-        self._sessions = sessioncontainer.SessionContainer()
-
-        check_interval = self.settings['session_check_interval'] * 1000
-        self._sessions_cleanup = ioloop.PeriodicCallback(self._sessions.expire,
-                                                         check_interval,
-                                                         self.io_loop)
-        self._sessions_cleanup.start()
-
+        self.initialize_session(session_store)
+        
         # Stats
         self.stats = stats.StatsCollector()
         self.stats.start(self.io_loop)
@@ -179,7 +179,16 @@ class TornadioRouter(object):
                     proto,
                     dict(server=self))
                 )
+    
+    def initialize_session(self, session_store):
+        self._sessions = session_store
 
+        check_interval = self.settings['session_check_interval'] * 1000
+        self._sessions_cleanup = ioloop.PeriodicCallback(self._sessions.expire,
+                                                         check_interval,
+                                                         self.io_loop)
+        self._sessions_cleanup.start()
+        
     @property
     def urls(self):
         """List of the URLs to be added to the Tornado application"""
