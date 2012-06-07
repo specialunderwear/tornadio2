@@ -1,4 +1,8 @@
-import pylibmc
+try:
+    import pylibmc
+except ImportError:
+    import warnings
+    warnings.warn("MemcachedSessionStore can not be used without installing pylibmc")
 
 class MemcachedSessionStore(object):
     def __init__(self, servers, session_expire_seconds=1000):
@@ -8,7 +12,6 @@ class MemcachedSessionStore(object):
                                             "verify_keys": True,
                                             "no_block": True,
                                             "remove_failed": 20})
-                                })
         self.session_expire_seconds = session_expire_seconds
 
     def add(self, session):
